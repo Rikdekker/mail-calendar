@@ -331,6 +331,7 @@ struct RichComposeView: View {
     private var composerDrop: ComposerDropModifier {
         ComposerDropModifier(
             attach: attachFiles,
+            start: startAttaching,
             droppedPictures: $droppedPictures,
             composerError: $composerError,
             editor: editor

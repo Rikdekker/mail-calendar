@@ -43,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
@@ -192,6 +193,7 @@ internal fun ControlTextButton(
 /**
  * An icon button, for an action beside a row where a label would take the row's room. [label] is
  * what assistive technology announces; the spinner takes the icon's place while its work runs.
+ * [iconSize] is the icon's side: an app bar draws its icons larger than a row does.
  */
 @Composable
 internal fun ControlIconButton(
@@ -200,16 +202,17 @@ internal fun ControlIconButton(
     control: ControlState,
     tag: String,
     modifier: Modifier = Modifier,
+    iconSize: Dp = 20.dp,
     onClick: () -> Unit,
 ) {
     IconButton(onClick = onClick, enabled = control.enabled, modifier = modifier.testTag(tag)) {
         if (control.running) {
-            CircularProgressIndicator(modifier = Modifier.size(18.dp).testTag("$tag-running"))
+            CircularProgressIndicator(modifier = Modifier.size(iconSize - 2.dp).testTag("$tag-running"))
         } else {
             Icon(
                 painter = painterResource(icon),
                 contentDescription = label,
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(iconSize),
             )
         }
     }

@@ -30,12 +30,18 @@ import androidx.compose.ui.unit.dp
 import uniffi.mailcal_bindings.ComposerFileAttachment
 import uniffi.mailcal_bindings.ComposerFileTile
 import uniffi.mailcal_bindings.ComposerFiles
+import uniffi.mailcal_bindings.ControlState
 import uniffi.mailcal_bindings.MailcalApp
 
 private const val TAG = "Mailcal"
 
 /** A composer holding no files, before the core has been asked or where there is none. */
-internal val NO_COMPOSER_FILES = ComposerFiles(tiles = emptyList(), changed = false, totalSize = 0uL)
+internal val NO_COMPOSER_FILES = ComposerFiles(
+    tiles = emptyList(),
+    changed = false,
+    totalSize = 0uL,
+    attach = ControlState(enabled = true, running = false),
+)
 
 /**
  * The core's calls on one composition's files. Each answers with the list as it now stands, or
@@ -47,6 +53,12 @@ internal interface ComposerFileList {
 
     fun add(files: List<ComposerFileAttachment>): ComposerFiles?
 
+    /** Starts an addition of files still being copied: Attach runs until [finish] ends it. */
+    fun begin(): ComposerFiles?
+
+    /** Ends one addition with the files that arrived, none when nothing did. */
+    fun finish(files: List<ComposerFileAttachment>): ComposerFiles?
+
     fun remove(id: String): ComposerFiles?
 }
 
@@ -57,6 +69,11 @@ internal fun composerFileList(instance: MailcalApp, composition: String): Compos
 
         override fun add(files: List<ComposerFileAttachment>) =
             asked { instance.addComposerFiles(composition, files) }
+
+        override fun begin() = asked { instance.beginAddingComposerFiles(composition) }
+
+        override fun finish(files: List<ComposerFileAttachment>) =
+            asked { instance.finishAddingComposerFiles(composition, files) }
 
         override fun remove(id: String) = asked { instance.removeComposerFile(composition, id) }
     }

@@ -123,6 +123,12 @@ it came to is the card's `outcome`, kept through every read while the page is on
 forgotten when the page sends `LeaveSubscription` on leaving, and a payment page it handed back
 its `checkout_page`, opened once per id. Buying from a phone's own store stays the client's, since no Rust can call StoreKit
 or Play.
+A composer's Attach is the core's as well: `ComposerFiles::attach`, running from the moment files
+the person chose are on their way (a picker has closed, a drop has landed) until the client has
+copied or read them and handed them over, since a film from the photo library is converted first
+and a file on a network mount is slow to read ([`composer-layout.md`](composer-layout.md) rule 3).
+The client announces each such addition as it starts and ends it once, with nothing when nothing
+arrived.
 The page's `notice` carries an id that grows with each one, so a client says each notice once. A removal's notice is the
 accounts list's (`MailcalApp::accounts_notice`), since the page goes with the account.
 
@@ -159,6 +165,7 @@ record, not a state the client keeps.
 | An account's sharing and the other devices' card: drawn from `account_page` and `allodia_devices`, a change sent as a page change, the pass run by the core | ✅ | ✅ | ✅ | ✅ | ✅ |
 | The Allodia account's sign-in and sign-out: drawn from `allodia_card`, run by the core as `AllodiaIntent`s, the sign-in as its one browser sign-in | ✅ | ✅ | ✅ | ✅ | ✅ |
 | The Allodia account's subscription: drawn from `allodia_subscription_card`, read and written by the core as `AllodiaIntent`s | ✅ | ✅ | ✅ | ✅ | ✅ |
+| A composer's Attach: drawn from `ComposerFiles::attach`, running while files the person chose are copied or read | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 ## Enforcement
 
@@ -230,6 +237,11 @@ record, not a state the client keeps.
   [`allodia_subscription_card_tests.rs`](../crates/mailcal-bindings/src/allodia_subscription_card_tests.rs)
   pins one read at a time, a write held until the read after it, an older read landing late
   dropped, and nothing landing for an account that has left.
+- [`composer_file_list_tests.rs`](../crates/mailcal-bindings/src/composer_file_list_tests.rs)
+  pins a composer's Attach: running from an addition's start until every one under way has ended,
+  one that brought nothing ending without a change, and one ending after its composition has gone
+  starting no list; [`tests_composer_files.rs`](../crates/mailcal-bindings/src/tests_composer_files.rs)
+  drives it through the app, a move leaving Attach free in the composer it moves to.
 - [`toggle_tests.rs`](../crates/mailcal-bindings/src/account_registry/toggle_tests.rs) pins the
   one decision `set_use` and the page share: the last use, a missing server, colleagues and shared
   mailboxes, a grant that lacks a use, and the page drawn from a real registry.

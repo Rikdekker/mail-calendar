@@ -129,11 +129,18 @@ internal fun RichComposeMessageDialog(
             files?.add(staged)?.let { fileTiles = it }
         }
     }
+    // Files the person chose that are still being copied: Attach runs from the start of the copies
+    // until they end, however little they brought (docs/waiting.md).
+    val startAttaching = { files?.begin()?.let { fileTiles = it } }
+    val finishAttaching = { staged: List<ComposerFileAttachment> ->
+        files?.finish(staged)?.let { fileTiles = it }
+    }
     // Pictures dropped on the composer, waiting on the one question they raise. Held rather than
     // acted on, because the answer decides whether they become body content or attachments.
     var droppedPictures by remember { mutableStateOf<List<ComposerFileAttachment>>(emptyList()) }
     val pickAttachments = rememberAttachmentPicker(
-        onStaged = attach,
+        onStarted = { startAttaching() },
+        onStaged = { finishAttaching(it) },
         onFailed = { composerError = L10n.compose_prepare_error(ctx) },
     )
     // The per-message style override of the persisted default, re-styles the quoted original in
@@ -284,6 +291,7 @@ internal fun RichComposeMessageDialog(
                     ComposerTopBar(
                         title = title,
                         onClose = exits::leave,
+                        attach = fileTiles.attach,
                         onAttach = { pickAttachments.launch(arrayOf("*/*")) },
                         signatureMenu = signing
                             ?.takeIf { it.library.isNotEmpty() }
@@ -349,8 +357,8 @@ internal fun RichComposeMessageDialog(
                         .padding(padding)
                         // A dropped file is resolved natively: web code sees a `File` with no path,
                         // so only the host can stage it for Rust and hand it to the core's list.
-                        .composerDropTarget { dropped ->
-                            attach(dropped.attach)
+                        .composerDropTarget(onStarted = { startAttaching() }) { dropped ->
+                            finishAttaching(dropped.attach)
                             droppedPictures = dropped.pictures
                         },
                 ) {
